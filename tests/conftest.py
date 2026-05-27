@@ -10,13 +10,11 @@ np.random.seed(2542546873)
 
 
 def pytest_collection_modifyitems(items, config):
-    # anything marked with chdb will also have chdb_only, and vice versa
-    # so don't worry about those, and then they don't get added to core tests
-    our_marks = {"chdb", "clickhouse"}
+    # chdb backend dropped: clickhouse server is the only backend. Unmarked tests
+    # are "core" and also run under -m clickhouse (but not -m clickhouse_no_core).
+    our_marks = {"clickhouse"}
 
     for item in items:
-        # any test without our marks is core.
-        # Runs on e.g. -m chdb by not on -m chdb_no_core
         if not any(marker.name in our_marks for marker in item.iter_markers()):
             item.add_marker("core")
             for mark in our_marks:
@@ -41,21 +39,6 @@ _NAMES = (
     "thomas",
     "thoams",
 )
-
-
-@fixture
-def chdb_api_factory():
-    # only import it if we need it
-    try:
-        from chdb import dbapi
-
-        from splinkclickhouse import ChDBAPI
-
-        con = dbapi.connect()
-        yield lambda: ChDBAPI(con)
-        con.close()
-    except ModuleNotFoundError:
-        yield None
 
 
 @fixture(scope="module")
@@ -96,14 +79,11 @@ def clickhouse_api_factory():
 
 @fixture(
     params=[
-        param("chdb", marks=[mark.chdb, mark.chdb_no_core]),
         param("clickhouse", marks=[mark.clickhouse, mark.clickhouse_no_core]),
     ]
 )
-def api_info(request, chdb_api_factory, clickhouse_api_factory):
+def api_info(request, clickhouse_api_factory):
     version = request.param
-    if version == "chdb":
-        return {"db_api_factory": chdb_api_factory, "version": version}
     if version == "clickhouse":
         return {"db_api_factory": clickhouse_api_factory, "version": version}
     raise ValueError(f"Unknown param: {version}")
