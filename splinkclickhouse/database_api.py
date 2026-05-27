@@ -74,8 +74,10 @@ class ClickhouseAPI(DatabaseAPI[None]):
         for old_sql, new_sql in self._sql_replacements:
             sql = sql.replace(old_sql, new_sql)
 
-        sql = f"CREATE TABLE {physical_name} ORDER BY tuple() AS {sql}"
-        return sql
+        return self._create_table_as(physical_name, sql)
+
+    def _create_table_as(self, physical_name: str, sql: str) -> str:
+        return f"CREATE TABLE {physical_name} ORDER BY tuple() AS {sql}"
 
     # alias random -> rand. Need this function for comparison viewer
     def _create_random_function(self) -> None:
