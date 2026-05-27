@@ -32,6 +32,16 @@ class ClickhouseDialect(SplinkDialect):
     def jaccard_function_name(self) -> str:
         return "stringJaccardIndexUTF8"
 
+    # Splink >=4.0.x emits Greatest/Least (e.g. in DistanceInKM + TF logic);
+    # upstream v0.4.1 predates that and didn't map them. ClickHouse has both.
+    @property
+    def greatest_function_name(self) -> str:
+        return "greatest"
+
+    @property
+    def least_function_name(self) -> str:
+        return "least"
+
     @property
     def array_first_index(self) -> int:
         return 1
